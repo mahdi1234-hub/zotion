@@ -38,6 +38,12 @@ export const Navbar = () => {
             </>
           )}
 
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/blog">Blog</Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/pages">Pages</Link>
+          </Button>
           {isAuthenticated && !isLoading && (
             <>
               <Button variant="ghost" size="sm" asChild>
