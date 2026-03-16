@@ -20,6 +20,7 @@ import {
   Search,
   Settings,
   Trash,
+  FileArchive,
 } from "lucide-react";
 import {
   Popover,
@@ -160,6 +161,7 @@ const Navigation = () => {
           <Item label="Search" icon={Search} isSearch onClick={search.onOpen} />
           <Item label="Settings" icon={Settings} onClick={settings.onOpen} />
           <Item onClick={handleCreate} label="New page" icon={PlusCircle} />
+          <Item label="Document Vault" icon={FileArchive} onClick={() => router.push("/vault")} />
         </div>
         <div className="mt-4">
           <div>
