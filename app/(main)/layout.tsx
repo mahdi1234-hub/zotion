@@ -5,6 +5,7 @@ import { useConvexAuth } from "convex/react";
 import { redirect } from "next/navigation";
 import Navigation from "./_components/Navigation";
 import { SearchCommand } from "@/components/search-command";
+import { AiChatWidget } from "@/components/ai-chat/ai-chat-widget";
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -28,6 +29,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
         <SearchCommand />
         {children}
       </main>
+      <AiChatWidget />
     </div>
   );
 };
