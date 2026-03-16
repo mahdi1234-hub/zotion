@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Search, SlidersHorizontal, Calendar, Tag, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,13 @@ import {
   generateId,
   type VaultDocument,
 } from "@/lib/document-store";
+import {
+  saveDocument as saveToDb,
+  getAllDocuments,
+  deleteDocument as deleteFromDb,
+  updateDocumentTags,
+  type SavedVaultDocument,
+} from "@/lib/vault-db";
 import { UploadZone } from "./_components/upload-zone";
 import { DocumentCard } from "./_components/document-card";
 import { DocumentDetail } from "./_components/document-detail";
@@ -27,6 +34,36 @@ export default function VaultPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Load saved documents from IndexedDB on mount
+  useEffect(() => {
+    const loadSavedDocs = async () => {
+      try {
+        const savedDocs = await getAllDocuments();
+        const restored: VaultDocument[] = savedDocs.map((saved) => {
+          const blob = new Blob([saved.fileData], { type: "application/pdf" });
+          const file = new File([blob], saved.name, { type: "application/pdf" });
+          return {
+            id: saved.id,
+            name: saved.name,
+            title: saved.title,
+            description: saved.description,
+            tags: saved.tags,
+            fileSize: saved.fileSize,
+            fileType: saved.fileType,
+            uploadDate: saved.uploadDate,
+            thumbnailUrl: saved.thumbnailUrl,
+            fileUrl: URL.createObjectURL(blob),
+            file,
+          };
+        });
+        setDocuments(restored);
+      } catch (error) {
+        console.error("Failed to load saved documents:", error);
+      }
+    };
+    loadSavedDocs();
+  }, []);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -95,6 +132,22 @@ export default function VaultPage() {
       };
 
       setDocuments((prev) => [doc, ...prev]);
+
+      // Persist to IndexedDB
+      const fileData = await file.arrayBuffer();
+      const savedDoc: SavedVaultDocument = {
+        id: doc.id,
+        name: doc.name,
+        title: doc.title,
+        description: doc.description,
+        tags: doc.tags,
+        fileSize: doc.fileSize,
+        fileType: doc.fileType,
+        uploadDate: doc.uploadDate,
+        thumbnailUrl: doc.thumbnailUrl,
+        fileData,
+      };
+      await saveToDb(savedDoc);
     } catch (error) {
       console.error("Error processing file:", error);
     } finally {
@@ -104,14 +157,24 @@ export default function VaultPage() {
 
   const handleDeleteDocument = useCallback((id: string) => {
     setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+    deleteFromDb(id).catch((err) =>
+      console.error("Failed to delete document from DB:", err),
+    );
   }, []);
 
   const handleRemoveTag = useCallback((id: string, tag: string) => {
-    setDocuments((prev) =>
-      prev.map((doc) =>
+    setDocuments((prev) => {
+      const updated = prev.map((doc) =>
         doc.id === id ? { ...doc, tags: doc.tags.filter((t) => t !== tag) } : doc,
-      ),
-    );
+      );
+      const doc = updated.find((d) => d.id === id);
+      if (doc) {
+        updateDocumentTags(id, doc.tags).catch((err) =>
+          console.error("Failed to update tags in DB:", err),
+        );
+      }
+      return updated;
+    });
   }, []);
 
   const toggleTag = useCallback((tag: string) => {

@@ -12,7 +12,8 @@ export type AgentAction =
   | { type: "open_search" }
   | { type: "update_document"; documentId: string; title?: string; icon?: string }
   | { type: "reply"; message: string }
-  | { type: "create_notebook"; title: string; subject: string; icon?: string };
+  | { type: "create_notebook"; title: string; subject: string; icon?: string }
+  | { type: "chat_with_ai"; message: string };
 
 interface DocumentInfo {
   _id: string;
@@ -488,17 +489,10 @@ export function parseUserMessage(
     };
   }
 
-  // Fallback
+  // Fallback — send to Groq LLM for a conversational response
   return {
-    type: "reply",
-    message:
-      `I'm not sure how to help with that. Here are some things I can do:\n\n` +
-      `\u2022 "Create a notebook about [subject]"\n` +
-      `\u2022 "List my documents"\n` +
-      `\u2022 "Switch to dark/light mode"\n` +
-      `\u2022 "Open settings"\n` +
-      `\u2022 "Open [document name]"\n\n` +
-      `Type **help** for more details!`,
+    type: "chat_with_ai",
+    message: message,
   };
 }
 

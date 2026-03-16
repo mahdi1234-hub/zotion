@@ -228,6 +228,40 @@ export const AiChatWidget = () => {
           break;
         }
 
+        case "chat_with_ai": {
+          try {
+            const chatHistory = messages
+              .filter((m) => m.role === "user" || m.role === "agent")
+              .slice(-10)
+              .map((m) => ({
+                role: m.role === "user" ? ("user" as const) : ("assistant" as const),
+                content: m.content,
+              }));
+            chatHistory.push({ role: "user" as const, content: action.message });
+
+            const res = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ messages: chatHistory }),
+            });
+
+            if (!res.ok) {
+              addAgentMessage(
+                "I couldn't reach the AI service right now. You can still use workspace commands like **help**, **create a notebook**, or **switch theme**.",
+              );
+              break;
+            }
+
+            const data = await res.json();
+            addAgentMessage(data.content || "Sorry, I couldn't generate a response.");
+          } catch {
+            addAgentMessage(
+              "Something went wrong connecting to AI. Try again or type **help** for workspace commands.",
+            );
+          }
+          break;
+        }
+
         case "reply": {
           addAgentMessage(action.message);
           break;
