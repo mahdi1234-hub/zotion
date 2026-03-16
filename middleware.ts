@@ -1,4 +1,20 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+const isPayloadRoute = (request: NextRequest) => {
+  const path = request.nextUrl.pathname;
+  return (
+    path.startsWith("/admin") ||
+    path.startsWith("/api/users") ||
+    path.startsWith("/api/posts") ||
+    path.startsWith("/api/pages") ||
+    path.startsWith("/api/media") ||
+    path.startsWith("/api/globals") ||
+    path.startsWith("/api/access") ||
+    path.startsWith("/api/payload-preferences")
+  );
+};
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -6,22 +22,21 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/preview(.*)",
   "/api/edgestore(.*)",
-  "/admin(.*)",
-  "/api/users(.*)",
-  "/api/posts(.*)",
-  "/api/pages(.*)",
-  "/api/media(.*)",
-  "/api/globals(.*)",
-  "/api/access(.*)",
   "/blog(.*)",
   "/pages(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect();
+export default function middleware(request: NextRequest) {
+  if (isPayloadRoute(request)) {
+    return NextResponse.next();
   }
-});
+
+  return clerkMiddleware(async (auth, req) => {
+    if (!isPublicRoute(req)) {
+      await auth.protect();
+    }
+  })(request, {} as never);
+}
 
 export const config = {
   matcher: [
