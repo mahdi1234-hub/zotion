@@ -3,6 +3,7 @@ import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import path from "path";
 import { fileURLToPath } from "url";
+import sharp from "sharp";
 
 import { Users } from "./payload/collections/Users";
 import { Posts } from "./payload/collections/Posts";
@@ -33,5 +34,5 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, "payload-types.ts"),
   },
-  sharp: undefined,
+  sharp,
 });
