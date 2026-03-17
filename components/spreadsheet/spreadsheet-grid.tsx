@@ -201,10 +201,11 @@ export function SpreadsheetGrid({ onOpenAiChat }: SpreadsheetGridProps) {
       tabIndex={0}
       onKeyDown={handleKeyDown}
       style={{
-        backgroundImage: "url('/spreadsheet-bg.png')",
-        backgroundSize: "cover",
+        backgroundImage: "url('/chat-bg.png')",
+        backgroundSize: "400px",
         backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
+        backgroundRepeat: "repeat",
+        backgroundColor: "#faf8f5",
       }}
     >
       <table className="border-collapse select-none" style={{ tableLayout: "fixed" }}>
@@ -292,7 +293,7 @@ export function SpreadsheetGrid({ onOpenAiChat }: SpreadsheetGridProps) {
 
       {contextMenu && (
         <div
-          className="fixed z-50 min-w-[220px] rounded-lg border border-[#dadce0] bg-white py-1 shadow-xl"
+          className="fixed z-50 min-w-[240px] rounded-xl border border-[#e0e0e0] bg-white/95 py-1.5 shadow-2xl backdrop-blur-md"
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
           <ContextMenuItem
@@ -366,7 +367,7 @@ function ContextMenuItem({
 }) {
   return (
     <button
-      className="flex w-full items-center gap-3 px-3 py-1.5 text-left text-[13px] text-[#202124] hover:bg-[#e8f0fe] transition-colors"
+      className="flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] text-[#202124] transition-colors hover:bg-[#f1f3f4]"
       onClick={onClick}
     >
       {icon}
