@@ -551,7 +551,7 @@ export function SpreadsheetDashboard() {
   };
 
   return (
-    <div className="flex h-full flex-col bg-[#f8f9fa]">
+    <div className="flex h-full flex-col" style={{ backgroundImage: "url('/chat-bg.png')", backgroundSize: "400px", backgroundRepeat: "repeat", backgroundColor: "#faf8f5" }}>
       {/* Dashboard header */}
       <div className="flex items-center justify-between border-b border-[#e2e3e3] bg-white px-4 py-3">
         <div className="flex items-center gap-2">
