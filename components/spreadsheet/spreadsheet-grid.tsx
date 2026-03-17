@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSpreadsheetStore } from "@/lib/spreadsheet-store";
 import { cn } from "@/lib/utils";
+import { Sparkles, BarChart3, Trash2, Copy, ClipboardPaste, Scissors } from "lucide-react";
 
 const COLS = 26;
 const ROWS = 100;
@@ -20,7 +21,11 @@ function getColLabel(col: number): string {
   return label;
 }
 
-export function SpreadsheetGrid() {
+interface SpreadsheetGridProps {
+  onOpenAiChat?: (prefill?: string) => void;
+}
+
+export function SpreadsheetGrid({ onOpenAiChat }: SpreadsheetGridProps) {
   const {
     selectedCell,
     editingCell,
@@ -37,6 +42,7 @@ export function SpreadsheetGrid() {
   const sheet = getActiveSheet();
   const inputRef = useRef<HTMLInputElement>(null);
   const [editValue, setEditValue] = useState("");
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; cellId: string } | null>(null);
 
   useEffect(() => {
     if (editingCell && inputRef.current) {
@@ -45,6 +51,14 @@ export function SpreadsheetGrid() {
       setEditValue(cell?.formula || cell?.value || "");
     }
   }, [editingCell, sheet.cells]);
+
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    if (contextMenu) {
+      document.addEventListener("click", handleClick);
+      return () => document.removeEventListener("click", handleClick);
+    }
+  }, [contextMenu]);
 
   const handleCellClick = useCallback(
     (cellId: string) => {
@@ -66,6 +80,15 @@ export function SpreadsheetGrid() {
     [setEditingCell, sheet.cells]
   );
 
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, cellId: string) => {
+      e.preventDefault();
+      setSelectedCell(cellId);
+      setContextMenu({ x: e.clientX, y: e.clientY, cellId });
+    },
+    [setSelectedCell]
+  );
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (!selectedCell) return;
@@ -74,7 +97,6 @@ export function SpreadsheetGrid() {
         if (editingCell) {
           setCellValue(editingCell, editValue);
           setEditingCell(null);
-          // Move down
           const match = selectedCell.match(/^([A-Z]+)(\d+)$/);
           if (match) {
             const nextRow = parseInt(match[2]) + 1;
@@ -135,7 +157,6 @@ export function SpreadsheetGrid() {
         }
       }
 
-      // Arrow keys navigation
       if (!editingCell) {
         const match = selectedCell.match(/^([A-Z]+)(\d+)$/);
         if (!match) return;
@@ -164,7 +185,6 @@ export function SpreadsheetGrid() {
             break;
         }
 
-        // Start typing to edit
         if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
           setEditingCell(selectedCell);
           setEditValue(e.key);
@@ -177,18 +197,24 @@ export function SpreadsheetGrid() {
 
   return (
     <div
-      className="flex-1 overflow-auto outline-none"
+      className="relative flex-1 overflow-auto outline-none"
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      style={{
+        backgroundImage: "url('/spreadsheet-bg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
       <table className="border-collapse select-none" style={{ tableLayout: "fixed" }}>
         <thead className="sticky top-0 z-10">
           <tr>
-            <th className="sticky left-0 z-20 w-[46px] min-w-[46px] border border-[#e2e3e3] bg-[#f8f9fa] text-center text-[11px] font-medium text-[#444746]" />
+            <th className="sticky left-0 z-20 w-[46px] min-w-[46px] border border-[#e2e3e3] bg-[#f8f9fa]/95 text-center text-[11px] font-medium text-[#444746] backdrop-blur-sm" />
             {Array.from({ length: COLS }, (_, i) => (
               <th
                 key={i}
-                className="border border-[#e2e3e3] bg-[#f8f9fa] px-1 text-center text-[11px] font-medium text-[#444746]"
+                className="border border-[#e2e3e3] bg-[#f8f9fa]/95 px-1 text-center text-[11px] font-medium text-[#444746] backdrop-blur-sm"
                 style={{
                   width: sheet.colWidths[i + 1] || DEFAULT_COL_WIDTH,
                   minWidth: sheet.colWidths[i + 1] || DEFAULT_COL_WIDTH,
@@ -205,7 +231,7 @@ export function SpreadsheetGrid() {
             const rowNum = rowIndex + 1;
             return (
               <tr key={rowNum}>
-                <td className="sticky left-0 z-10 border border-[#e2e3e3] bg-[#f8f9fa] text-center text-[11px] font-medium text-[#444746]"
+                <td className="sticky left-0 z-10 border border-[#e2e3e3] bg-[#f8f9fa]/95 text-center text-[11px] font-medium text-[#444746] backdrop-blur-sm"
                   style={{ height: sheet.rowHeights[rowNum] || DEFAULT_ROW_HEIGHT }}
                 >
                   {rowNum}
@@ -221,9 +247,9 @@ export function SpreadsheetGrid() {
                     <td
                       key={cellId}
                       className={cn(
-                        "border border-[#e2e3e3] px-1 text-[13px] leading-[28px] cursor-cell relative",
-                        isSelected && "outline outline-2 outline-[#1a73e8] z-[5]",
-                        !isSelected && "hover:bg-[#f0f4ff]"
+                        "border border-[#e2e3e3]/70 px-1 text-[13px] leading-[28px] cursor-cell relative bg-white/85 backdrop-blur-sm",
+                        isSelected && "outline outline-2 outline-[#1a73e8] z-[5] bg-white/95",
+                        !isSelected && "hover:bg-white/95"
                       )}
                       style={{
                         height: sheet.rowHeights[rowNum] || DEFAULT_ROW_HEIGHT,
@@ -231,14 +257,15 @@ export function SpreadsheetGrid() {
                         fontStyle: cellData?.format?.italic ? "italic" : undefined,
                         textDecoration: cellData?.format?.underline ? "underline" : undefined,
                         color: cellData?.format?.color,
-                        backgroundColor: isSelected
-                          ? undefined
-                          : cellData?.format?.backgroundColor,
+                        backgroundColor: cellData?.format?.backgroundColor
+                          ? cellData.format.backgroundColor
+                          : undefined,
                         fontSize: cellData?.format?.fontSize,
                         textAlign: cellData?.format?.textAlign || "left",
                       }}
                       onClick={() => handleCellClick(cellId)}
                       onDoubleClick={() => handleCellDoubleClick(cellId)}
+                      onContextMenu={(e) => handleContextMenu(e, cellId)}
                     >
                       {isEditing ? (
                         <input
@@ -262,6 +289,89 @@ export function SpreadsheetGrid() {
           })}
         </tbody>
       </table>
+
+      {contextMenu && (
+        <div
+          className="fixed z-50 min-w-[220px] rounded-lg border border-[#dadce0] bg-white py-1 shadow-xl"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          <ContextMenuItem
+            icon={<Sparkles className="h-4 w-4 text-[#1a73e8]" />}
+            label="Ask AI about this cell"
+            shortcut="Ctrl+I"
+            onClick={() => {
+              const cellVal = getCellDisplay(contextMenu.cellId);
+              onOpenAiChat?.(`Tell me about cell ${contextMenu.cellId}${cellVal ? ` which contains "${cellVal}"` : ""}`);
+              setContextMenu(null);
+            }}
+          />
+          <ContextMenuItem
+            icon={<Sparkles className="h-4 w-4 text-purple-500" />}
+            label="AI Fill - Auto populate data"
+            onClick={() => {
+              onOpenAiChat?.("Fill the spreadsheet with sample data. Respond with a JSON block in this format:\n```fill\n[{\"cell\":\"A1\",\"value\":\"Name\"},{\"cell\":\"B1\",\"value\":\"Sales\"}]\n```");
+              setContextMenu(null);
+            }}
+          />
+          <ContextMenuItem
+            icon={<BarChart3 className="h-4 w-4 text-green-600" />}
+            label="Generate chart from data"
+            onClick={() => {
+              onOpenAiChat?.("Suggest the best charts for my current spreadsheet data");
+              setContextMenu(null);
+            }}
+          />
+          <div className="my-1 border-t border-[#e8eaed]" />
+          <ContextMenuItem
+            icon={<Copy className="h-4 w-4" />}
+            label="Copy"
+            shortcut="Ctrl+C"
+            onClick={() => { copyCells(); setContextMenu(null); }}
+          />
+          <ContextMenuItem
+            icon={<ClipboardPaste className="h-4 w-4" />}
+            label="Paste"
+            shortcut="Ctrl+V"
+            onClick={() => { pasteCells(); setContextMenu(null); }}
+          />
+          <ContextMenuItem
+            icon={<Scissors className="h-4 w-4" />}
+            label="Cut"
+            shortcut="Ctrl+X"
+            onClick={() => { copyCells(); deleteCells(); setContextMenu(null); }}
+          />
+          <div className="my-1 border-t border-[#e8eaed]" />
+          <ContextMenuItem
+            icon={<Trash2 className="h-4 w-4 text-red-500" />}
+            label="Delete cell content"
+            shortcut="Del"
+            onClick={() => { deleteCells(); setContextMenu(null); }}
+          />
+        </div>
+      )}
     </div>
+  );
+}
+
+function ContextMenuItem({
+  icon,
+  label,
+  shortcut,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  shortcut?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className="flex w-full items-center gap-3 px-3 py-1.5 text-left text-[13px] text-[#202124] hover:bg-[#e8f0fe] transition-colors"
+      onClick={onClick}
+    >
+      {icon}
+      <span className="flex-1">{label}</span>
+      {shortcut && <span className="text-[11px] text-[#80868b]">{shortcut}</span>}
+    </button>
   );
 }

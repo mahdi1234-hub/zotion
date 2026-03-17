@@ -1,15 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import { SpreadsheetGrid } from "@/components/spreadsheet/spreadsheet-grid";
 import { SpreadsheetToolbar } from "@/components/spreadsheet/spreadsheet-toolbar";
 import { SheetTabs } from "@/components/spreadsheet/sheet-tabs";
-import { SpreadsheetAiChat } from "@/components/spreadsheet/spreadsheet-ai-chat";
+import { SpreadsheetAiChat, SpreadsheetAiChatRef } from "@/components/spreadsheet/spreadsheet-ai-chat";
 import { SpreadsheetDashboard } from "@/components/spreadsheet/spreadsheet-dashboard";
 import { useSpreadsheetStore } from "@/lib/spreadsheet-store";
 
 export default function SpreadsheetPage() {
   const { showDashboard } = useSpreadsheetStore();
+  const aiChatRef = useRef<SpreadsheetAiChatRef>(null);
 
   return (
     <div className="flex h-full flex-col bg-white">
@@ -40,13 +41,13 @@ export default function SpreadsheetPage() {
         <SpreadsheetDashboard />
       ) : (
         <>
-          <SpreadsheetGrid />
+          <SpreadsheetGrid onOpenAiChat={(msg) => aiChatRef.current?.openWithMessage(msg || "")} />
           <SheetTabs />
         </>
       )}
 
       {/* AI Chat */}
-      <SpreadsheetAiChat />
+      <SpreadsheetAiChat ref={aiChatRef} />
     </div>
   );
 }

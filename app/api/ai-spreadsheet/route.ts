@@ -31,6 +31,12 @@ When suggesting charts, respond with a JSON block in this format:
 }
 \`\`\`
 
+When asked to fill or populate spreadsheet cells, respond with a JSON block in this format:
+\`\`\`fill
+[{"cell":"A1","value":"Header1"},{"cell":"B1","value":"Header2"},{"cell":"A2","value":"Data1"}]
+\`\`\`
+Use cell references like A1, B2, etc. Include headers in row 1 and data in subsequent rows.
+
 Always be helpful, concise, and reference the actual data in the spreadsheet.`;
 
     if (action === "analyze") {
