@@ -6,8 +6,17 @@ import { redirect } from "next/navigation";
 import Navigation from "./_components/Navigation";
 import { SearchCommand } from "@/components/search-command";
 import { AiChatWidget } from "@/components/ai-chat/ai-chat-widget";
+import { AppProviders } from "@/components/providers/app-providers";
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <AppProviders>
+      <MainLayoutInner>{children}</MainLayoutInner>
+    </AppProviders>
+  );
+};
+
+const MainLayoutInner = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useConvexAuth();
 
   if (isLoading) {

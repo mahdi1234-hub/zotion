@@ -1,4 +1,10 @@
+import { AppProviders } from "@/components/providers/app-providers";
+
 const PublicLayout = ({ children }: { children: React.ReactNode }) => {
-  return <div className="dark:bg-dark h-full">{children}</div>;
+  return (
+    <AppProviders>
+      <div className="dark:bg-dark h-full">{children}</div>
+    </AppProviders>
+  );
 };
 export default PublicLayout;
